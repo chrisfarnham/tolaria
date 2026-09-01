@@ -1,9 +1,21 @@
 import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
 import nodePath from "node:path";
+import { fileURLToPath } from "node:url";
+
+// esbuild's CJS output shims `import.meta` to an empty object (it warns
+// "import.meta is not available with the cjs output format"), so
+// `import.meta.url` is undefined in the bundled mcp-server shipped inside
+// Tolaria.app. `__dirname` is a real CJS global there, so prefer it when
+// present and fall back to `import.meta.url` for the unbundled ESM module
+// (e.g. under `node --test`).
+const moduleDir =
+	typeof __dirname !== "undefined"
+		? __dirname
+		: nodePath.dirname(fileURLToPath(import.meta.url));
 
 const appConfigPolicy = JSON.parse(
-	readFileSync(new URL("./app-config-policy.json", import.meta.url), "utf-8"),
+	readFileSync(nodePath.join(moduleDir, "app-config-policy.json"), "utf-8"),
 );
 
 const APP_CONFIG_DIR = appConfigPolicy.current_namespace;
